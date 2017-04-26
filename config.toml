@@ -1,0 +1,9 @@
+baseURL = "http://grundleborg.github.io"
+languageCode = "en-gb"
+title = "Grundleborg's Cave"
+
+theme = "hyde"
+
+[params]
+  themeColor = "theme-base-0b"
+  description = "Things... and stuff..."
