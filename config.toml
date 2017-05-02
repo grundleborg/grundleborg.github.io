@@ -2,6 +2,8 @@ baseURL = "https://grundleborg.github.io/"
 languageCode = "en-gb"
 title = "Grundleborg's Cave"
 
+googleAnalytics = "UA-30877098-2"
+
 theme = "hyde"
 
 [params]
