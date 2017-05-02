@@ -6,4 +6,4 @@ theme = "hyde"
 
 [params]
   themeColor = "theme-base-0b"
-  description = "Things... and stuff..."
+  description = "Ramblings about Software Development, Hardware Hacking, Cinema & Trains."
