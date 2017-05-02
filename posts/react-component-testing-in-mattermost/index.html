@@ -1,0 +1,413 @@
+	<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.20.2" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  
+  <title>React Component Testing in Mattermost &middot; Grundleborg&#39;s Cave</title>
+  
+
+  
+  <link rel="stylesheet" href="http://grundleborg.github.iocss/poole.css">
+  <link rel="stylesheet" href="http://grundleborg.github.iocss/syntax.css">
+  <link rel="stylesheet" href="http://grundleborg.github.iocss/hyde.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  <link href="" rel="alternate" type="application/rss+xml" title="Grundleborg&#39;s Cave" />
+
+  
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.11.0/styles/tomorrow.min.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.11.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+	<body class="theme-base-0b ">
+		<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="http://grundleborg.github.io"><h1>Grundleborg&#39;s Cave</h1></a>
+      <p class="lead">
+       Ramblings about Software Development, Hardware Hacking, Cinema &amp; Trains. 
+      </p>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li><a href="/">Home</a> </li>
+      
+    </ul>
+
+    <p>&copy; 2017. All rights reserved. </p>
+  </div>
+</div>
+
+
+		<div class="content container">
+			<div class="post">
+			 	<h1>React Component Testing in Mattermost</h1>
+			  <span class="post-date">Tue, May 2, 2017</span>
+			      
+
+<p><a href="https://github.com/mattermost/platform/">Mattermost</a> is a large web app written in <a href="https://facebook.github.io/react/">ReactJS</a>. It currently consists of a little over 300 components, built using a &ldquo;Flux-like&rdquo; architecture. This makes unit testing of components particularly challenging as the vast majority of them call methods on the stores directly. Of course, it&rsquo;s <em>possible</em> to mock out the stores in every
+  test, but it&rsquo;s not really <em>practical</em> to do this.</p>
+
+<p>If that was the end of the story, it would be a very boring one indeed. Fortunately, we are in the process of changing the underlying architecture of the Mattermost web app. After testing out <a href="http://redux.js.org/docs/introduction/">Redux</a> as the core of our new <a href="https://facebook.github.io/react-native/">React Native</a> powered <a href="https://github.com/mattermost/mattermost-mobile">mobile apps</a>, we&rsquo;ve decided to move over to the same architecture in our web app. I&rsquo;ll leave writing about the details of how that migration is happening to someone else, and instead focus on the impact of this on component testing.</p>
+
+<p>As part of the transition to Redux, our component structure is changing. Instead of accessing stores from any component whenever some store data is needed, components will now be logically grouped into hierarchies of pure, UI components, receiving all their data through their <code>props</code>, with store access limited to a single &ldquo;controller&rdquo; UI-less component acting as the parent to each group of UI components.</p>
+
+<p>This change of architecture brings a major benefit for component testing: UI components no longer have complicated side effects, extensive dependency chains, or direct access to data sources. Instead, there is a single API onto each component, described by its <code>props</code> field. This makes unit testing each component in isolation a trivial task.</p>
+
+<p>From the point of view of the application as a whole, having well defined API contracts that are extensively unit tested eases the reuse of components (and reduces the appeal of copy-paste code blocks being littered throughout the code base  - something that currently happens rather more often than we&rsquo;d ideally like). It also provides a structure and set of expectations around the behaviour of components, which reduces the need to examine the internals of every child component (and grandchild&hellip;ad infinitum) to investigate bugs or make simple feature changes to a component, as is often the case in our current code base.</p>
+
+<h2 id="jest-and-enzyme">Jest and Enzyme</h2>
+
+<p>Mattermost uses <a href="https://facebook.github.io/jest/">Jest</a> to run the web app tests, in combination with <a href="http://airbnb.io/enzyme/">Enzyme</a>. The combination of these two utilities gives us a very simple workflow for component testing. Enzyme allows us to render and interact with React components in isolation, and Jest allows us to perform snapshot testing against these components - allowing us to detect any changes in rendered output of components and, where such a change is intended, automatically update the test snapshots. The integration between these two utilities is provided by the <a href="https://www.npmjs.com/package/enzyme-to-json">enzyme-to-json</a> library.</p>
+
+<p>I won&rsquo;t get into the details of how we set up the plumbing for these libraries - plenty of other people have written about it (e.g. <a href="https://hackernoon.com/testing-react-components-with-jest-and-enzyme-41d592c174f">here</a>), and the only differences between what they and I have done are specific to the Mattermost codebase. If you are interested, you can have a look through the <a href="https://github.com/mattermost/platform/tree/master/webapp">Mattermost web app</a> source code.</p>
+
+<h2 id="the-tests">The Tests</h2>
+
+<p>To recap for a moment: the purpose of the component tests we are building is to verify the API contract of the UI components, expressed in terms of their <code>props</code>. However, since we don&rsquo;t yet live in a perfect world of 100% pure components, where practical we also want to test any known side-effects of global state on them.</p>
+
+<p>Let&rsquo;s consider two example components. The first is the <code>BackstageHeader</code> component (full source code <a href="https://github.com/mattermost/platform/blob/v3.8.2/webapp/components/backstage/components/backstage_header.jsx">here</a>), chosen for its extreme simplicity, and the fact it is already a pure component. The render method is shown here:</p>
+
+<pre><code class="language-javascript">render() {
+    const children = [];
+
+    React.Children.forEach(this.props.children, (child, index) =&gt; {
+        if (index !== 0) {
+            children.push(
+                &lt;span
+                    key={'divider' + index}
+                    className='backstage-header__divider'
+                &gt;
+                    &lt;i className='fa fa-angle-right'/&gt;
+                &lt;/span&gt;
+            );
+        }
+
+        children.push(child);
+    });
+
+    return (
+        &lt;div className='backstage-header'&gt;
+            &lt;h1&gt;
+                {children}
+            &lt;/h1&gt;
+        &lt;/div&gt;
+    );
+}
+</code></pre>
+
+<p>And the props:</p>
+
+<pre><code class="language-javascript">static get propTypes() {
+    return {
+        children: React.PropTypes.node
+    };
+}
+</code></pre>
+
+<p>This is a very simple component - it just builds a header based on the single, optional <code>children</code> prop, containing a list of child objects to insert into the header.</p>
+
+<h3 id="shallow-rendering">Shallow Rendering</h3>
+
+<p>The component tests we are building are <em>unit</em> tests, so we would like to limit the testing to individual components, and avoid changes in components elsewhere in the hierarchy affecting these tests. Enzyme provides a very useful tool for this: shallow rendering. Shallow rendering allows us to render just this component, but not any of it&rsquo;s child components, allowing it to be tested entirely in isolation.</p>
+
+<pre><code class="language-javascript">test('should match snapshot without children', () =&gt; {
+    const wrapper = shallow(
+        &lt;BackstageHeader/&gt;
+    );
+    expect(wrapper).toMatchSnapshot();
+});
+</code></pre>
+
+<p>This first, very simple test shallow-renders the <code>BackstageHeader</code> component, and makes use of Jest&rsquo;s built in snapshot testing capability to compare the rendered component with a known-good snapshot (more on that in the next section). As the <code>children</code> prop is optional, we test the component initially without any children to ensure it behaves properly.</p>
+
+<p>The only other test we need here is one <em>with</em> the <code>children</code> prop set:</p>
+
+<pre><code class="language-javascript">test('should match snapshot with children', () =&gt; {
+    const wrapper = shallow(
+        &lt;BackstageHeader&gt;
+            &lt;div&gt;{'Child 1'}&lt;/div&gt;
+            &lt;div&gt;{'Child 2'}&lt;/div&gt;
+        &lt;/BackstageHeader&gt;
+    );
+    expect(wrapper).toMatchSnapshot();
+});
+</code></pre>
+
+<p>That&rsquo;s it for this very simple component. You can see the <code>BackstageHeader</code> test suite in full <a href="https://github.com/mattermost/platform/blob/v3.8.2/webapp/tests/components/backstage/components/backstage_header.test.jsx">here</a>.</p>
+
+<h3 id="running-tests">Running Tests</h3>
+
+<p>If you are adding or modifying existing component tests, you can run jest in &ldquo;watch&rdquo; mode like this:</p>
+
+<pre><code class="language-bash">user@host webapp$ npm run test:watch
+</code></pre>
+
+<p>This will run all tests that have been modified, and then continue to watch for further modifications, re-running tests as necessary. On the first run with new tests, it&rsquo;ll generate the test snapshots, placing them in the <code>__snapshots__</code> directory inside the directory where the test suite is located. You&rsquo;ll then see output like this:</p>
+
+<pre><code>No tests found related to files changed since last commit.
+Press `a` to run all tests, or run Jest with `--watchAll`.
+
+Watch Usage
+ › Press a to run all tests.
+ › Press p to filter by a filename regex pattern.
+ › Press t to filter by a test name regex pattern.
+ › Press q to quit watch mode.
+ › Press Enter to trigger a test run.
+
+</code></pre>
+
+<p>For the <code>BackstageHeader</code> test, let&rsquo;s take a look at the snapshot that has been generated:</p>
+
+<pre><code class="language-javascript">// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`components/backstage/components/BackstageHeader should match snapshot with children 1`] = `
+&lt;div
+  className=&quot;backstage-header&quot;
+&gt;
+  &lt;h1&gt;
+    &lt;div&gt;
+      Child 1
+    &lt;/div&gt;
+    &lt;span
+      className=&quot;backstage-header__divider&quot;
+    &gt;
+      &lt;i
+        className=&quot;fa fa-angle-right&quot;
+      /&gt;
+    &lt;/span&gt;
+    &lt;div&gt;
+      Child 2
+    &lt;/div&gt;
+  &lt;/h1&gt;
+&lt;/div&gt;
+`;
+
+exports[`components/backstage/components/BackstageHeader should match snapshot without children 1`] = `
+&lt;div
+  className=&quot;backstage-header&quot;
+&gt;
+  &lt;h1 /&gt;
+&lt;/div&gt;
+`;
+</code></pre>
+
+<p>We can see that this contains the rendered output for both test cases shown above. You won&rsquo;t ever need to manually edit this file - Jest will take care of that for you, as we are about to find out.</p>
+
+<p>Let&rsquo;s make a change to the <code>BackstageHeader</code> component. Instead of using the FontAwesome right-angle-bracket between each header item, let&rsquo;s use the left-angle-bracket instead. We change the relevant line in <code>backstage_header.jsx</code> from <code>&lt;i className='fa fa-angle-right'/&gt;</code> to <code>&lt;i className='fa fa-angle-left'/&gt;</code>. Switching back to the shell where we ran the tests in watch mode previously, we see the following output:</p>
+
+<pre><code> FAIL  tests/components/backstage/components/backstage_header.test.jsx
+  ● components/backstage/components/BackstageHeader › should match snapshot with children
+
+    expect(value).toMatchSnapshot()
+    
+    Received value does not match stored snapshot 1.
+    
+    - Snapshot
+    + Received
+    
+    @@ -7,11 +7,11 @@
+         &lt;/div&gt;
+         &lt;span
+           className=&quot;backstage-header__divider&quot;
+         &gt;
+           &lt;i
+    -        className=&quot;fa fa-angle-right&quot;
+    +        className=&quot;fa fa-angle-left&quot;
+           /&gt;
+         &lt;/span&gt;
+         &lt;div&gt;
+           Child 2
+         &lt;/div&gt;
+      
+      at Object.&lt;anonymous&gt; (tests/components/backstage/components/backstage_header.test.jsx:24:25)
+      at process._tickCallback (internal/process/next_tick.js:109:7)
+
+  components/backstage/components/BackstageHeader
+    ✓ should match snapshot without children (3ms)
+    ✕ should match snapshot with children (5ms)
+
+Snapshot Summary
+ › 1 snapshot test failed in 1 test suite. Inspect your code changes or press `u` to update them.
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 passed, 2 total
+Snapshots:   1 failed, 1 passed, 2 total
+Time:        1.896s
+Ran all test suites related to changed files.
+
+Watch Usage
+ › Press a to run all tests.
+ › Press u to update failing snapshots.
+ › Press p to filter by a filename regex pattern.
+ › Press t to filter by a test name regex pattern.
+ › Press q to quit watch mode.
+ › Press Enter to trigger a test run.
+</code></pre>
+
+<p>In that output, you can see that one of the test cases has passed, but the other has failed, due to the change to the symbol displayed between the child components. Helpfully, a diff of the rendered output is displayed. By looking at the diff, we can see that the test case failing is due to our intentional change to <code>BackstageHeader</code>, so we should update the test snapshot, rather than fix a bug which the tests have brought to light. We can do this simply by pressing the letter <code>u</code>. Once this has completed, we see the following output indicating that the tests are now passing once more:</p>
+
+<pre><code>PASS  tests/components/backstage/components/backstage_header.test.jsx
+  components/backstage/components/BackstageHeader
+    ✓ should match snapshot without children (4ms)
+    ✓ should match snapshot with children (3ms)
+
+Snapshot Summary
+ › 1 snapshot updated in 1 test suite.
+
+Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total
+Snapshots:   1 updated, 1 passed, 2 total
+Time:        0.528s, estimated 2s
+Ran all test suites related to changed files.
+
+Watch Usage
+ › Press a to run all tests.
+ › Press p to filter by a filename regex pattern.
+ › Press t to filter by a test name regex pattern.
+ › Press q to quit watch mode.
+ › Press Enter to trigger a test run.
+</code></pre>
+
+<p>The contents of the <code>__snapshots__</code> directories are an essential part of the test suite. Be sure to always run the full test suite to generate them after adding or modifying any components or test code, and to include them in your git commits.</p>
+
+<h3 id="global-state">Global State</h3>
+
+<p>The <code>BackstageHeader</code> component is a very simple, pure component. But how about a more complex component? For this second example, we will use the <code>AboutBuildModal</code> component. The source code for this component is too long to reproduce in full, but can be seen <a href="https://github.com/mattermost/platform/blob/v3.8.2/webapp/components/about_build_modal.jsx">here</a>. The props it expects are as follows:</p>
+
+<pre><code class="language-javascript">AboutBuildModal.propTypes = {
+    show: React.PropTypes.bool.isRequired,
+    onModalDismissed: React.PropTypes.func.isRequired
+};
+</code></pre>
+
+<p>Testing how it renders with <code>show</code> set to <code>true</code> and <code>false</code> respectively would be simple enough, but by examining the source code of the component, we see that it also renders differently depending on some global state. In order to test this, we need test cases covering the full range of global state which can have an effect on how it renders. One example is shown below:</p>
+
+<pre><code class="language-javascript">test('should show the build number if it is the different from the version number', () =&gt; {
+    global.window.mm_config = {
+        BuildEnterpriseReady: 'false',
+        Version: '3.6.0',
+        BuildNumber: '3.6.2',
+        SQLDriverName: 'Postgres',
+        BuildHash: 'abcdef1234567890',
+        BuildDate: '21 January 2017'
+    };
+
+    global.window.mm_license = null;
+
+    const wrapper = shallow(
+        &lt;AboutBuildModal
+            show={true}
+            onModalDismissed={null}
+        /&gt;
+    );
+    expect(wrapper.find('#versionString').text()).toBe(' 3.6.0\u00a0 (3.6.2)');
+});
+</code></pre>
+
+<p>That&rsquo;s just one of the test cases needed to ensure the different ways in which the component can render are all covered. The full test suite for the <code>AboutBuildModal</code> can be seen <a href="https://github.com/mattermost/platform/blob/v3.8.2/webapp/tests/components/about_build_modal.test.jsx">here</a>.</p>
+
+<h3 id="mounting-components">Mounting Components</h3>
+
+<p>Continuing with the <code>AboutBuildModal</code>, there&rsquo;s one other prop we want to test: the <code>onModalDismissed</code> callback. This should be triggered when the <code>Modal</code> component within the <code>AboutBuildModal</code> is hidden. In order to interact with the full component hierarchy within the <code>AboutBuildModal</code>, we need to do a full render, or &ldquo;mount&rdquo;, rather than a shallow render as we&rsquo;ve been using previously. We can then use the <code>find()</code> method on the wrapper to locate the inner component and trigger it as if it has been hidden by the user, to test if our <code>onModalDismissed</code> prop is correctly called.</p>
+
+<pre><code class="language-javascript">test('should call onModalDismissed callback when the modal is hidden', (done) =&gt; {
+    global.window.mm_config = {
+        BuildEnterpriseReady: 'false',
+        Version: '3.6.0',
+        BuildNumber: '3.6.2',
+        SQLDriverName: 'Postgres',
+        BuildHash: 'abcdef1234567890',
+        BuildDate: '21 January 2017'
+    };
+
+    global.window.mm_license = null;
+
+    function onHide() {
+        done();
+    }
+
+    const wrapper = mountWithIntl(
+        &lt;AboutBuildModal
+            show={true}
+            onModalDismissed={onHide}
+        /&gt;
+    );
+    wrapper.find(Modal).first().props().onHide();
+});
+</code></pre>
+
+<h3 id="react-i18n-test-helper">React i18n Test Helper</h3>
+
+<p>If you were looking closely, you might have noticed that we used a function called <code>mountWithIntl()</code> in the previous test case. This is a custom function that wraps the <code>mount()</code> function provided by enzyme, in order to inject the props needed for React i18n support to work. Whenever you are shallow rendering or mounting a component which will result in the rendering of localised strings, you should use the appropriate wrapper functions to ensure they work correctly. The code is very simple and shown below (you can see it in the Mattermost source tree <a href="https://github.com/mattermost/platform/blob/v3.8.2/webapp/tests/helpers/intl-test-helper.jsx">here</a>).</p>
+
+<pre><code class="language-javascript">import {mount, shallow} from 'enzyme';
+import React from 'react';
+import {IntlProvider, intlShape} from 'react-intl';
+
+const intlProvider = new IntlProvider({locale: 'en'}, {});
+const {intl} = intlProvider.getChildContext();
+
+export function shallowWithIntl(node, {context} = {}) {
+    return shallow(React.cloneElement(node, {intl}), {
+        context: Object.assign({}, context, {intl})
+    });
+}
+
+export function mountWithIntl(node, {context, childContextTypes} = {}) {
+    return mount(React.cloneElement(node, {intl}), {
+        context: Object.assign({}, context, {intl}),
+        childContextTypes: Object.assign({}, {intl: intlShape}, childContextTypes)
+    });
+}
+</code></pre>
+
+<h3 id="testing-events">Testing events</h3>
+
+<p>There&rsquo;s one other major feature of enzyme that we haven&rsquo;t shown in these examples: event simulation. Enzyme allows you to simulate events in order to test your event handlers. This can be done by finding the relevant item on the rendered <code>wrapper</code> object, then using the <code>simulate()</code> method to trigger an event, and using <code>toBeCalled()</code> to assert that the appropriate handler is called. The previous example test could thus be rewritten as follows:</p>
+
+<pre><code class="language-javascript">test('should call onModalDismissed callback when the modal is hidden', () =&gt; {
+    global.window.mm_config = {
+        BuildEnterpriseReady: 'false',
+        Version: '3.6.0',
+        BuildNumber: '3.6.2',
+        SQLDriverName: 'Postgres',
+        BuildHash: 'abcdef1234567890',
+        BuildDate: '21 January 2017'
+    };
+
+    const onHide = jest.fn();
+    const wrapper = mountWithIntl(
+        &lt;AboutBuildModal
+            show={true}
+            onModalDismissed={onHide}
+        /&gt;
+    );
+    wrapper.find(Modal).first().simulate('hide');
+    expect(onHide).toBeCalled();
+});
+</code></pre>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Component tests provide an easy way of unit testing React components, ensuring consistency in their rendered output, and enforcing a reliable, props-based API. As we move the web app codebase to Redux, the potential benefits increase dramatically, as almost all UI components will be fully testable in this way. Going forward, we expect to make component tests a requirement for all new (or refactored) UI components introduced into the Mattermost webapp in the near future, similar to how we already require test coverage for all server-side changes. You can keep see the Mattermost webapp&rsquo;s component tests as they are added <a href="https://github.com/mattermost/platform/tree/master/webapp/tests/components">here</a>.</p>
+
+			</div>
+
+			
+		</div>
+
+  </body>
+</html>
