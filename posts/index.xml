@@ -6,10 +6,20 @@
     <description>Recent content in Posts on Grundleborg&#39;s Cave</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-gb</language>
-    <lastBuildDate>Tue, 02 May 2017 16:25:32 +0100</lastBuildDate>
+    <lastBuildDate>Thu, 24 Aug 2017 14:38:21 +0100</lastBuildDate>
     
 	<atom:link href="https://grundleborg.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Custom Slash Commands in Mattermost with AWS Lambda and API Gateway</title>
+      <link>https://grundleborg.github.io/posts/mattermost-custom-slash-command-aws-lambda/</link>
+      <pubDate>Thu, 24 Aug 2017 14:38:21 +0100</pubDate>
+      
+      <guid>https://grundleborg.github.io/posts/mattermost-custom-slash-command-aws-lambda/</guid>
+      <description>Mattermost comes with a number of built-in slash commands, such as /join to join a channel, or /away to set your status to away. It also supports Slack-compatible custom slash commands. These offer a simple way to add custom commands that help to make your team&amp;rsquo;s workflow fast, efficient and enjoyable.
+Custom slash commands are actually very easy to build. You just need to set up an HTTP endpoint which will receive the command payload, processes it and respond with the message which will be posted.</description>
+    </item>
     
     <item>
       <title>React Component Testing in Mattermost</title>
