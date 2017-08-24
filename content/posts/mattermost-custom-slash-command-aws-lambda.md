@@ -29,13 +29,13 @@ We'll start by setting up the Lambda function and API Gateway endpoint in AWS.
    - Provide a name for your function. We'll use `SlashStandup`.
    - Choose *Python 3.6* for the runtime.
    - Select *Edit code inline*.
-   - For the function code, copy paste the code in the [Implementing our Slack Command] section.
+   - For the function code, copy paste the code in the [Implementing our Slash Command] section.
    - For the Lambda Function Handler, create a new role from template, and give it a name, e.g. *runLambdaFunctionsRole*.
    - For RAM and Timeout, select `128mb` and `30s` respectively.
 6. Advance to the review page, and click *Create Function*.
 7. On the success page, you should see the URL for your new API endpoint. 
 
-## Implementing our Slack Command
+## Implementing our Slash Command
 
 The full Python 3.6 code for the `/standup` Custom Slash Command is as follows:
 
