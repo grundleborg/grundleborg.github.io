@@ -360,7 +360,7 @@ test('should call onModalDismissed callback when the modal is hidden', () => {
 ## Conclusion
 Component tests provide an easy way of unit testing React components, ensuring consistency in their rendered output, and enforcing a reliable, props-based API. As we move the web app codebase to Redux, the potential benefits increase dramatically, as almost all UI components will be fully testable in this way. Going forward, we expect to make component tests a requirement for all new (or refactored) UI components introduced into the Mattermost webapp in the near future, similar to how we already require test coverage for all server-side changes. You can keep see the Mattermost webapp's component tests as they are added [here][16].
 
-[1]: https://github.com/mattermost/platform/
+[1]: https://github.com/mattermost/mattermost-server/
 [2]: https://facebook.github.io/react/
 [3]: http://redux.js.org/docs/introduction/
 [4]: https://facebook.github.io/react-native/
@@ -369,11 +369,11 @@ Component tests provide an easy way of unit testing React components, ensuring c
 [7]: http://airbnb.io/enzyme/
 [8]: https://www.npmjs.com/package/enzyme-to-json
 [9]: https://hackernoon.com/testing-react-components-with-jest-and-enzyme-41d592c174f
-[10]: https://github.com/mattermost/platform/tree/master/webapp
+[10]: https://github.com/mattermost/mattermost-webapp/
 [11]: https://github.com/mattermost/platform/blob/v3.8.2/webapp/components/backstage/components/backstage_header.jsx
 [12]: https://github.com/mattermost/platform/blob/v3.8.2/webapp/tests/components/backstage/components/backstage_header.test.jsx
 [13]: https://github.com/mattermost/platform/blob/v3.8.2/webapp/components/about_build_modal.jsx
 [14]: https://github.com/mattermost/platform/blob/v3.8.2/webapp/tests/components/about_build_modal.test.jsx
 [15]: https://github.com/mattermost/platform/blob/v3.8.2/webapp/tests/helpers/intl-test-helper.jsx
-[16]: https://github.com/mattermost/platform/tree/master/webapp/tests/components
+[16]: https://github.com/mattermost/mattermost-webapp/tree/master/tests/components
 
