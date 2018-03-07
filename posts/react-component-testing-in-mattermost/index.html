@@ -56,7 +56,7 @@ ga('send', 'pageview');
       
     </ul>
 
-    <p>&copy; 2017. All rights reserved. </p>
+    <p>&copy; 2018. All rights reserved. </p>
   </div>
 </div>
 
@@ -67,7 +67,7 @@ ga('send', 'pageview');
 			  <span class="post-date">Tue, May 2, 2017</span>
 			      
 
-<p><a href="https://github.com/mattermost/platform/">Mattermost</a> is a large web app written in <a href="https://facebook.github.io/react/">ReactJS</a>. It currently consists of a little over 300 components, built using a &ldquo;Flux-like&rdquo; architecture. This makes unit testing of components particularly challenging as the vast majority of them call methods on the stores directly. Of course, it&rsquo;s <em>possible</em> to mock out the stores in every
+<p><a href="https://github.com/mattermost/mattermost-server/">Mattermost</a> is a large web app written in <a href="https://facebook.github.io/react/">ReactJS</a>. It currently consists of a little over 300 components, built using a &ldquo;Flux-like&rdquo; architecture. This makes unit testing of components particularly challenging as the vast majority of them call methods on the stores directly. Of course, it&rsquo;s <em>possible</em> to mock out the stores in every
   test, but it&rsquo;s not really <em>practical</em> to do this.</p>
 
 <p>If that was the end of the story, it would be a very boring one indeed. Fortunately, we are in the process of changing the underlying architecture of the Mattermost web app. After testing out <a href="http://redux.js.org/docs/introduction/">Redux</a> as the core of our new <a href="https://facebook.github.io/react-native/">React Native</a> powered <a href="https://github.com/mattermost/mattermost-mobile">mobile apps</a>, we&rsquo;ve decided to move over to the same architecture in our web app. I&rsquo;ll leave writing about the details of how that migration is happening to someone else, and instead focus on the impact of this on component testing.</p>
@@ -82,7 +82,7 @@ ga('send', 'pageview');
 
 <p>Mattermost uses <a href="https://facebook.github.io/jest/">Jest</a> to run the web app tests, in combination with <a href="http://airbnb.io/enzyme/">Enzyme</a>. The combination of these two utilities gives us a very simple workflow for component testing. Enzyme allows us to render and interact with React components in isolation, and Jest allows us to perform snapshot testing against these components - allowing us to detect any changes in rendered output of components and, where such a change is intended, automatically update the test snapshots. The integration between these two utilities is provided by the <a href="https://www.npmjs.com/package/enzyme-to-json">enzyme-to-json</a> library.</p>
 
-<p>I won&rsquo;t get into the details of how we set up the plumbing for these libraries - plenty of other people have written about it (e.g. <a href="https://hackernoon.com/testing-react-components-with-jest-and-enzyme-41d592c174f">here</a>), and the only differences between what they and I have done are specific to the Mattermost codebase. If you are interested, you can have a look through the <a href="https://github.com/mattermost/platform/tree/master/webapp">Mattermost web app</a> source code.</p>
+<p>I won&rsquo;t get into the details of how we set up the plumbing for these libraries - plenty of other people have written about it (e.g. <a href="https://hackernoon.com/testing-react-components-with-jest-and-enzyme-41d592c174f">here</a>), and the only differences between what they and I have done are specific to the Mattermost codebase. If you are interested, you can have a look through the <a href="https://github.com/mattermost/mattermost-webapp/">Mattermost web app</a> source code.</p>
 
 <h2 id="the-tests">The Tests</h2>
 
@@ -412,7 +412,7 @@ export function mountWithIntl(node, {context, childContextTypes} = {}) {
 
 <h2 id="conclusion">Conclusion</h2>
 
-<p>Component tests provide an easy way of unit testing React components, ensuring consistency in their rendered output, and enforcing a reliable, props-based API. As we move the web app codebase to Redux, the potential benefits increase dramatically, as almost all UI components will be fully testable in this way. Going forward, we expect to make component tests a requirement for all new (or refactored) UI components introduced into the Mattermost webapp in the near future, similar to how we already require test coverage for all server-side changes. You can keep see the Mattermost webapp&rsquo;s component tests as they are added <a href="https://github.com/mattermost/platform/tree/master/webapp/tests/components">here</a>.</p>
+<p>Component tests provide an easy way of unit testing React components, ensuring consistency in their rendered output, and enforcing a reliable, props-based API. As we move the web app codebase to Redux, the potential benefits increase dramatically, as almost all UI components will be fully testable in this way. Going forward, we expect to make component tests a requirement for all new (or refactored) UI components introduced into the Mattermost webapp in the near future, similar to how we already require test coverage for all server-side changes. You can keep see the Mattermost webapp&rsquo;s component tests as they are added <a href="https://github.com/mattermost/mattermost-webapp/tree/master/tests/components">here</a>.</p>
 
 			</div>
 
